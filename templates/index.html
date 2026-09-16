@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DermAI - Skin Disease Classification System</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0fdfa',
+                            100: '#ccfbf1',
+                            500: '#14b8a6',
+                            600: '#0d9488',
+                            700: '#0f766e',
+                        },
+                        clinical: {
+                            blue: '#1e3a8a',
+                            navy: '#0f172a',
+                            accent: '#0284c7'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col antialiased selection:bg-teal-500 selection:text-white">
+
+    <!-- TOP NAVBAR -->
+    <nav class="bg-white/90 backdrop-blur-md border-b border-slate-200 sticky top-0 z-50 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-teal-600 to-cyan-500 flex items-center justify-center text-white shadow-md shadow-teal-500/20">
+                        <i class="fa-solid fa-microscope text-xl"></i>
+                    </div>
+                    <div>
+                        <span class="font-bold text-xl tracking-tight text-slate-900 flex items-center gap-2">
+                            DermAI <span class="text-xs px-2 py-0.5 font-semibold bg-teal-100 text-teal-800 rounded-full">MobileNetV2</span>
+                        </span>
+                        <p class="text-xs text-slate-500 hidden sm:block">Intelligent Skin Condition Screening & Triage</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-4">
+                    <div class="hidden md:flex items-center space-x-6 text-sm font-medium text-slate-600">
+                        <a href="#scanner-section" class="hover:text-teal-600 transition">Scanner</a>
+                        <a href="#samples-section" class="hover:text-teal-600 transition">Sample Test Cases</a>
+                        <a href="#knowledge-section" class="hover:text-teal-600 transition">Disease Guide</a>
+                        <a href="#architecture-section" class="hover:text-teal-600 transition">Model Specs</a>
+                    </div>
+                    <div class="flex items-center gap-2 bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-full text-xs font-semibold border border-emerald-200">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 -ml-3"></span>
+                        AI Engine Online
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- MAIN CONTAINER -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10">
+
+        <!-- HERO HEADER -->
+        <header class="text-center max-w-3xl mx-auto space-y-4 pt-4">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-50 border border-teal-200 text-teal-700 text-xs font-semibold">
+                <i class="fa-solid fa-circle-check text-teal-600"></i> Trained on 5 Classes: Acne, Eczema, Melanoma, Vitiligo & Healthy Skin
+            </div>
+            <h1 class="text-3xl sm:text-5xl font-extrabold text-slate-900 tracking-tight leading-tight">
+                AI-Powered Dermatological <span class="text-transparent bg-clip-text bg-gradient-to-r from-teal-600 to-cyan-600">Screening & Analysis</span>
+            </h1>
+            <p class="text-slate-600 text-base sm:text-lg">
+                Utilize deep transfer learning with MobileNetV2 to analyze suspicious skin lesions, evaluate image quality in real time, and inspect multi-class diagnostic confidence.
+            </p>
+        </header>
+
+        <!-- SCANNER WORKSPACE -->
+        <section id="scanner-section" class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            
+            <!-- LEFT COLUMN: INPUT / CAPTURE / OPTIONS -->
+            <div class="lg:col-span-5 space-y-6">
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+                    
+                    <!-- Input Mode Selector -->
+                    <div class="flex p-1 bg-slate-100 rounded-xl mb-6">
+                        <button id="tab-upload-btn" class="flex-1 py-2 text-sm font-semibold rounded-lg transition-all duration-200 bg-white text-teal-700 shadow-sm flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-cloud-arrow-up"></i> Upload Photo
+                        </button>
+                        <button id="tab-camera-btn" class="flex-1 py-2 text-sm font-semibold rounded-lg transition-all duration-200 text-slate-600 hover:text-slate-900 flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-camera"></i> Live Camera
+                        </button>
+                    </div>
+
+                    <!-- PANE A: UPLOAD -->
+                    <div id="pane-upload" class="space-y-4">
+                        <div id="drop-zone" class="border-2 border-dashed border-slate-300 hover:border-teal-500 transition-colors rounded-xl p-6 text-center cursor-pointer bg-slate-50/50 hover:bg-teal-50/20 group">
+                            <input type="file" id="file-input" accept="image/*" class="hidden">
+                            <div class="space-y-3">
+                                <div class="w-14 h-14 mx-auto rounded-full bg-slate-100 group-hover:bg-teal-100 text-slate-400 group-hover:text-teal-600 flex items-center justify-center transition-colors">
+                                    <i class="fa-regular fa-image text-2xl"></i>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-semibold text-slate-800">
+                                        Click to upload or drag & drop
+                                    </p>
+                                    <p class="text-xs text-slate-500 mt-1">
+                                        Supports JPG, PNG, WEBP (Min. 200x200 recommended)
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Uploaded Image Preview -->
+                        <div id="upload-preview-container" class="hidden relative rounded-xl overflow-hidden border border-slate-200 bg-slate-900 flex items-center justify-center max-h-72">
+                            <img id="upload-preview-img" src="" alt="Selected skin image" class="max-h-72 object-contain w-full">
+                            <button id="clear-upload-btn" class="absolute top-2 right-2 bg-slate-900/80 hover:bg-slate-900 text-white rounded-full p-2 text-xs transition backdrop-blur-sm" title="Remove image">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- PANE B: CAMERA -->
+                    <div id="pane-camera" class="hidden space-y-4">
+                        <div class="relative rounded-xl overflow-hidden bg-slate-900 aspect-[4/3] flex items-center justify-center border border-slate-200 shadow-inner">
+                            <video id="webcam-video" autoplay playsinline class="w-full h-full object-cover"></video>
+                            
+                            <!-- Central Skin ROI Alignment Overlay -->
+                            <div id="camera-overlay" class="absolute inset-0 pointer-events-none flex items-center justify-center">
+                                <div class="w-3/5 h-3/5 border-2 border-dashed border-teal-400/80 rounded-xl flex flex-col justify-between p-2 shadow-2xl backdrop-brightness-105">
+                                    <div class="flex justify-between text-[10px] text-teal-300 font-mono tracking-wider">
+                                        <span>[ROI TARGET]</span>
+                                        <span>224x224</span>
+                                    </div>
+                                    <div class="text-center text-[11px] text-teal-200 bg-slate-900/60 py-0.5 rounded px-2 backdrop-blur-sm">
+                                        Center skin lesion here
+                                    </div>
+                                </div>
+                            </div>
+
+                            <canvas id="snapshot-canvas" class="hidden"></canvas>
+                        </div>
+
+                        <div class="flex gap-2">
+                            <button id="start-cam-btn" class="flex-1 py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-sm font-semibold transition flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-video"></i> Start Camera
+                            </button>
+                            <button id="capture-cam-btn" disabled class="flex-1 py-2.5 px-4 rounded-xl bg-teal-600 hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold transition flex items-center justify-center gap-2 shadow-md shadow-teal-600/20">
+                                <i class="fa-solid fa-camera-retro"></i> Capture
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Analysis Controls & Options -->
+                    <div class="pt-4 border-t border-slate-100 space-y-3">
+                        <label class="flex items-center justify-between text-xs text-slate-600 cursor-pointer p-2 rounded-lg hover:bg-slate-50 transition">
+                            <span class="flex items-center gap-2">
+                                <i class="fa-solid fa-crop-simple text-teal-600"></i>
+                                <span>Focus on Central Skin Region (ROI Crop)</span>
+                            </span>
+                            <input type="checkbox" id="roi-checkbox" checked class="w-4 h-4 text-teal-600 rounded border-slate-300 focus:ring-teal-500">
+                        </label>
+
+                        <button id="analyze-btn" disabled class="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 text-white font-semibold text-sm shadow-md shadow-teal-600/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i>
+                            <span id="analyze-btn-text">Run Neural Screening</span>
+                        </button>
+                    </div>
+
+                </div>
+
+                <!-- QUICK TEST PRESETS -->
+                <div id="samples-section" class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                            <i class="fa-solid fa-vial-circle-check text-teal-600"></i> Quick Test Cases
+                        </h3>
+                        <span class="text-xs text-slate-400">1-Click Diagnostic</span>
+                    </div>
+                    <p class="text-xs text-slate-500">Don't have an image ready? Test any condition directly from our test dataset:</p>
+                    
+                    <div id="samples-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                        <!-- Loaded dynamically via JS -->
+                        <div class="col-span-full py-4 text-center text-xs text-slate-400 animate-pulse">
+                            Loading verified test cases...
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- RIGHT COLUMN: DIAGNOSTIC REPORT & PROBABILITY CHARTS -->
+            <div class="lg:col-span-7 space-y-6">
+
+                <!-- STATE 1: EMPTY / IDLE STATE -->
+                <div id="results-idle" class="bg-white rounded-2xl p-10 text-center border border-slate-200 shadow-sm flex flex-col items-center justify-center min-h-[480px]">
+                    <div class="w-20 h-20 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400 text-3xl mb-4">
+                        <i class="fa-solid fa-wave-square"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-800 mb-2">Awaiting Image Input</h3>
+                    <p class="text-sm text-slate-500 max-w-md mb-6">
+                        Upload a dermatological image, use your live webcam, or pick one of the sample test cases to begin analysis.
+                    </p>
+                    <div class="grid grid-cols-3 gap-4 max-w-md w-full text-center">
+                        <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                            <i class="fa-solid fa-camera text-teal-600 text-lg mb-1"></i>
+                            <div class="text-xs font-semibold text-slate-700">1. Capture</div>
+                        </div>
+                        <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                            <i class="fa-solid fa-brain text-teal-600 text-lg mb-1"></i>
+                            <div class="text-xs font-semibold text-slate-700">2. MobileNetV2</div>
+                        </div>
+                        <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                            <i class="fa-solid fa-notes-medical text-teal-600 text-lg mb-1"></i>
+                            <div class="text-xs font-semibold text-slate-700">3. Full Report</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STATE 2: LOADING SKELETON -->
+                <div id="results-loading" class="hidden bg-white rounded-2xl p-8 border border-slate-200 shadow-sm space-y-6">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-12 h-12 rounded-full bg-slate-200 animate-pulse"></div>
+                        <div class="space-y-2 flex-1">
+                            <div class="h-4 bg-slate-200 rounded w-1/3 animate-pulse"></div>
+                            <div class="h-3 bg-slate-200 rounded w-1/2 animate-pulse"></div>
+                        </div>
+                    </div>
+                    <div class="h-48 bg-slate-100 rounded-xl animate-pulse flex items-center justify-center text-slate-400">
+                        <div class="text-center space-y-2">
+                            <i class="fa-solid fa-circle-notch fa-spin text-2xl text-teal-600"></i>
+                            <p class="text-xs font-medium text-slate-500">Evaluating blur, illumination, and neural features...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STATE 3: RESULTS REPORT -->
+                <div id="results-report" class="hidden space-y-6">
+
+                    <!-- PRIMARY DIAGNOSIS CARD -->
+                    <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm relative overflow-hidden">
+                        <!-- Top status bar -->
+                        <div class="flex flex-wrap items-center justify-between gap-2 pb-4 border-b border-slate-100">
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Primary Classification</span>
+                            </div>
+                            <div id="severity-badge-container">
+                                <!-- Severity badge inserted dynamically -->
+                            </div>
+                        </div>
+
+                        <!-- Main diagnosis headline -->
+                        <div class="pt-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                            <div>
+                                <h2 id="result-title" class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                                    Condition Name
+                                </h2>
+                                <p id="result-category" class="text-sm font-medium text-slate-500">
+                                    Condition Category
+                                </p>
+                            </div>
+                            <!-- Confidence Meter -->
+                            <div class="flex items-center gap-3 bg-slate-50 border border-slate-200 px-4 py-3 rounded-2xl">
+                                <div class="text-right">
+                                    <div class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Confidence</div>
+                                    <div id="result-confidence" class="text-2xl font-black text-teal-600">
+                                        00.0%
+                                    </div>
+                                </div>
+                                <div class="w-10 h-10 rounded-full bg-teal-100 text-teal-700 flex items-center justify-center font-bold text-sm">
+                                    <i class="fa-solid fa-chart-pie"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 70% Threshold Alert Banner -->
+                        <div id="threshold-alert" class="hidden mt-4 p-3.5 rounded-xl text-xs font-medium flex items-start gap-2.5">
+                            <i id="threshold-icon" class="fa-solid text-base mt-0.5"></i>
+                            <span id="threshold-text" class="flex-1 leading-relaxed"></span>
+                        </div>
+
+                        <!-- Quality Verification Indicator Bar -->
+                        <div class="mt-4 pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-4 text-xs text-slate-500">
+                            <div class="flex items-center gap-4">
+                                <div>
+                                    <span class="text-slate-400">Sharpness:</span>
+                                    <span id="metric-sharpness" class="font-semibold text-slate-700 ml-1">0</span>
+                                </div>
+                                <div>
+                                    <span class="text-slate-400">Brightness:</span>
+                                    <span id="metric-brightness" class="font-semibold text-slate-700 ml-1">0</span>
+                                </div>
+                                <div>
+                                    <span class="text-slate-400">Input Resolution:</span>
+                                    <span id="metric-res" class="font-semibold text-slate-700 ml-1">0x0</span>
+                                </div>
+                            </div>
+                            <div id="metric-status" class="font-semibold"></div>
+                        </div>
+                    </div>
+
+                    <!-- PROBABILITY DISTRIBUTION & ROI PREVIEW -->
+                    <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+                        <!-- Chart (7 cols) -->
+                        <div class="md:col-span-7 bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex flex-col justify-between">
+                            <div>
+                                <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider mb-3 flex items-center gap-2">
+                                    <i class="fa-solid fa-chart-column text-teal-600"></i> Class Probabilities
+                                </h3>
+                                <p class="text-xs text-slate-500 mb-4">
+                                    Multi-class distribution output from the final softmax layer:
+                                </p>
+                            </div>
+                            <div class="h-56 relative">
+                                <canvas id="probabilityChart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Preprocessed ROI Preview (5 cols) -->
+                        <div class="md:col-span-5 bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex flex-col justify-between">
+                            <div>
+                                <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider mb-2 flex items-center gap-2">
+                                    <i class="fa-solid fa-bullseye text-teal-600"></i> Analyzed ROI
+                                </h3>
+                                <p class="text-xs text-slate-500 mb-3">
+                                    Central skin section passed to the 224x224 model tensor:
+                                </p>
+                            </div>
+                            <div class="relative rounded-xl overflow-hidden bg-slate-100 aspect-square flex items-center justify-center border border-slate-200">
+                                <img id="roi-preview-img" src="" alt="Analyzed ROI" class="w-full h-full object-cover">
+                                <div class="absolute bottom-2 right-2 bg-slate-900/80 text-[10px] font-mono text-white px-2 py-0.5 rounded backdrop-blur-sm">
+                                    224 x 224
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CLINICAL GUIDANCE & DETAILS -->
+                    <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-4">
+                        <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                            <i class="fa-solid fa-book-medical text-teal-600"></i> Clinical Guidance & Actions
+                        </h3>
+                        
+                        <p id="medical-description" class="text-sm text-slate-600 leading-relaxed">
+                            Description text...
+                        </p>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                            <!-- Symptoms -->
+                            <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                                <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-stethoscope text-teal-600"></i> Key Characteristics
+                                </h4>
+                                <ul id="medical-symptoms" class="text-xs text-slate-600 space-y-1.5 list-disc list-inside">
+                                    <!-- Dynamic -->
+                                </ul>
+                            </div>
+
+                            <!-- Recommendations -->
+                            <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                                <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-shield-heart text-teal-600"></i> Recommended Care
+                                </h4>
+                                <ul id="medical-recommendations" class="text-xs text-slate-600 space-y-1.5 list-disc list-inside">
+                                    <!-- Dynamic -->
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- When to see a doctor -->
+                        <div id="doctor-advice-box" class="p-4 rounded-xl text-xs flex items-start gap-3 bg-amber-50 border border-amber-200 text-amber-900">
+                            <i class="fa-solid fa-user-doctor text-base text-amber-600 mt-0.5"></i>
+                            <div>
+                                <span class="font-bold">Physician Consultation Advice:</span>
+                                <p id="medical-doctor-advice" class="mt-0.5 leading-relaxed"></p>
+                            </div>
+                        </div>
+
+                        <!-- Action Bar -->
+                        <div class="pt-4 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100">
+                            <div class="flex items-center gap-2">
+                                <button onclick="window.print()" class="py-2 px-4 rounded-xl border border-slate-300 hover:bg-slate-50 text-xs font-semibold text-slate-700 transition flex items-center gap-2">
+                                    <i class="fa-solid fa-print"></i> Print / PDF Report
+                                </button>
+                                <button id="download-report-btn" class="py-2 px-4 rounded-xl border border-teal-300 bg-teal-50/50 hover:bg-teal-50 text-xs font-semibold text-teal-700 transition flex items-center gap-2">
+                                    <i class="fa-solid fa-download"></i> Save Report (.txt)
+                                </button>
+                            </div>
+                            <button id="scan-new-btn" class="py-2 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition flex items-center gap-2">
+                                <i class="fa-solid fa-rotate-left"></i> Scan Another Image
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+        <!-- ENCYCLOPEDIA / DISEASE GUIDE SECTION -->
+        <section id="knowledge-section" class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm space-y-6">
+            <div>
+                <div class="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-teal-600 mb-1">
+                    <i class="fa-solid fa-book-open"></i> Dermatological Reference
+                </div>
+                <h2 class="text-2xl font-bold text-slate-900">Skin Condition Reference Guide</h2>
+                <p class="text-sm text-slate-500 mt-1">
+                    Comprehensive clinical background on all 5 conditions recognized by our classifier:
+                </p>
+            </div>
+
+            <div id="disease-cards-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Loaded dynamically via JS -->
+            </div>
+        </section>
+
+        <!-- MODEL ARCHITECTURE SECTION -->
+        <section id="architecture-section" class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm space-y-6">
+            <div>
+                <div class="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-teal-600 mb-1">
+                    <i class="fa-solid fa-network-wired"></i> Deep Learning Pipeline
+                </div>
+                <h2 class="text-2xl font-bold text-slate-900">MobileNetV2 Architecture & Evaluation</h2>
+                <p class="text-sm text-slate-500 mt-1">
+                    Lightweight convolutional architecture optimized for dermatological triage:
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-slate-50 p-5 rounded-xl border border-slate-100">
+                    <div class="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Base Architecture</div>
+                    <div class="text-lg font-bold text-slate-900">MobileNetV2</div>
+                    <div class="text-xs text-slate-500 mt-1">Pre-trained on ImageNet with frozen weights & inverted residuals.</div>
+                </div>
+
+                <div class="bg-slate-50 p-5 rounded-xl border border-slate-100">
+                    <div class="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Input Tensor</div>
+                    <div class="text-lg font-bold text-slate-900">224 × 224 × 3</div>
+                    <div class="text-xs text-slate-500 mt-1">RGB normalized with MobileNetV2 preprocessing (-1.0 to +1.0).</div>
+                </div>
+
+                <div class="bg-slate-50 p-5 rounded-xl border border-slate-100">
+                    <div class="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Dataset Split</div>
+                    <div class="text-lg font-bold text-slate-900">70% / 15% / 15%</div>
+                    <div class="text-xs text-slate-500 mt-1">Stratified train, validation, and independent test evaluation sets.</div>
+                </div>
+
+                <div class="bg-slate-50 p-5 rounded-xl border border-slate-100">
+                    <div class="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Triage Threshold</div>
+                    <div class="text-lg font-bold text-teal-600">70% Confidence</div>
+                    <div class="text-xs text-slate-500 mt-1">Safe fallback trigger for uncertain or marginal disease predictions.</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- MEDICAL DISCLAIMER -->
+        <section class="bg-amber-50/70 rounded-2xl p-6 border border-amber-200 text-amber-900 space-y-2">
+            <div class="flex items-center gap-2 font-bold text-sm text-amber-800">
+                <i class="fa-solid fa-triangle-exclamation text-amber-600 text-base"></i>
+                <span>Important Clinical & Medical Disclaimer</span>
+            </div>
+            <p class="text-xs text-amber-800/90 leading-relaxed">
+                This software is an educational prototype and decision-support research demonstration powered by machine learning. <strong>It does not provide medical advice, diagnosis, or clinical treatment plans.</strong> Skin conditions—especially malignant lesions such as Melanoma—require thorough physical examination, dermoscopy, and histopathological biopsy by a licensed medical practitioner. If you notice a suspicious mole or experiencing skin discomfort, please consult a qualified healthcare provider immediately.
+            </p>
+        </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-white border-t border-slate-200 mt-12 py-8 text-center text-xs text-slate-500 space-y-2">
+        <p class="font-medium text-slate-700">DermAI - Skin Disease Classification Platform</p>
+        <p>Built with TensorFlow 2, MobileNetV2, OpenCV, Flask & TailwindCSS.</p>
+    </footer>
+
+    <!-- App JavaScript -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
