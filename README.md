@@ -91,6 +91,20 @@ Then open the browser at:
 http://127.0.0.1:5000/
 ```
 
+## Deploy as a Public Website
+
+`127.0.0.1` is the local-host address, so it is only accessible from the computer running the app. To publish the website, push this project to GitHub and create a web service on a Python hosting platform such as Render or Railway.
+
+Use these deployment settings:
+
+- **Build command:** `pip install -r requirements.txt`
+- **Start command:** `gunicorn app:app`
+- **Environment:** Python 3.10 or newer
+
+The platform will provide a public HTTPS URL after deployment. The repository must include `app.py`, `requirements.txt`, `Procfile`, and `skin_disease_mobilenetv2.keras`. The trained model is required at runtime, so it must be committed to the repository or downloaded during deployment.
+
+Do not use GitHub Pages for this project: GitHub Pages hosts static HTML, CSS, and JavaScript, but cannot run the Flask and TensorFlow backend.
+
 ## Prediction Workflow
 
 - Upload an image of the skin area
