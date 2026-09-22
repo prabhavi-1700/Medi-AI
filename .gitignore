@@ -3,6 +3,9 @@ venv/
 ENV/
 env/
 
+# Local training data is not needed by the deployed app
+split_dataset/
+
 # Python Cache
 __pycache__/
 *.py[cod]
