@@ -91,6 +91,16 @@ Then open the browser at:
 http://127.0.0.1:5000/
 ```
 
+## Run with Streamlit
+
+This repository also includes a Streamlit entry point for Streamlit Community Cloud. Set the app file to `streamlit_app.py` and use Python 3.11. The app reuses the same TensorFlow model and prediction pipeline as the Flask application.
+
+Run locally with:
+
+```bash
+streamlit run streamlit_app.py
+```
+
 ## Deploy as a Public Website
 
 `127.0.0.1` is the local-host address, so it is only accessible from the computer running the app. To publish the website, push this project to GitHub and create a web service on a Python hosting platform such as Render or Railway.

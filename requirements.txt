@@ -2,6 +2,7 @@ tensorflow==2.15.0
 numpy<2.0
 Pillow
 opencv-python-headless
+streamlit
 flask
 flask-cors
 gunicorn
