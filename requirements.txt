@@ -1,9 +1,7 @@
-tensorflow
-kaggle
-numpy
-matplotlib
-scikit-learn
-opencv-python
+tensorflow==2.15.0
+numpy<2.0
+Pillow
+opencv-python-headless
 flask
 flask-cors
 gunicorn
