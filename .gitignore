@@ -1,5 +1,6 @@
 # Virtual Environment
 venv/
+.venv/
 ENV/
 env/
 
@@ -8,6 +9,7 @@ split_dataset/
 
 # Python Cache
 __pycache__/
+.ipynb_checkpoints/
 *.py[cod]
 *$py.class
 *.so
